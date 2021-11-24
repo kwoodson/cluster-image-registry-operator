@@ -474,6 +474,14 @@ func (d *driver) CreateStorage(cr *imageregistryv1.Config) error {
 				Key:   "Name",
 				Value: infra.Status.InfrastructureName + "-image-registry",
 			},
+			{
+				Key:   "sigs.k8s.io/cloud-provider-alibaba/origin",
+				Value: "ocp",
+			},
+			{
+				Key:   "GISV",
+				Value: "ocp",
+			},
 		}
 
 		// at this stage we are not keeping user tags in sync. as per enhancement proposal
