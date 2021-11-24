@@ -3,6 +3,7 @@ package oss
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -21,11 +22,10 @@ import (
 	"github.com/openshift/cluster-image-registry-operator/pkg/envvar"
 )
 
-var TestAccessKeyId = []byte("TEST_ACCESS_KEY_ID")
-var TestAccessKeySecret = []byte("TEST_ACCESS_KEY_SECRET")
+var TestAccessKeyId = "TEST_ACCESS_KEY_ID"
+var TestAccessKeySecret = "TEST_ACCESS_KEY_SECRET"
 var TestBucketName = "a-bucket"
 var TestAnotherBucketName = "another-bucket"
-var TestYetAnotherBucketName = "yet-another-bucket"
 
 func TestGetConfig(t *testing.T) {
 	testBuilder := cirofake.NewFixturesBuilder()
@@ -50,8 +50,7 @@ func TestGetConfig(t *testing.T) {
 			Namespace: defaults.ImageRegistryOperatorNamespace,
 		},
 		Data: map[string][]byte{
-			imageRegistryAccessKeyID:     TestAccessKeyId,
-			imageRegistryAccessKeySecret: TestAccessKeySecret,
+			imageRegistrySecretDataKey: generateInitCredentialForSec(),
 		},
 	})
 	listers := testBuilder.BuildListers()
@@ -96,8 +95,7 @@ func TestGetConfigCustomRegionEndpoint(t *testing.T) {
 			Namespace: defaults.ImageRegistryOperatorNamespace,
 		},
 		Data: map[string][]byte{
-			imageRegistryAccessKeyID:     TestAccessKeyId,
-			imageRegistryAccessKeySecret: TestAccessKeySecret,
+			imageRegistrySecretDataKey: generateInitCredentialForSec(),
 		},
 	})
 	listers := testBuilder.BuildListers()
@@ -153,8 +151,7 @@ func TestConfigEnv(t *testing.T) {
 			Namespace: defaults.ImageRegistryOperatorNamespace,
 		},
 		Data: map[string][]byte{
-			imageRegistryAccessKeyID:     TestAccessKeyId,
-			imageRegistryAccessKeySecret: TestAccessKeySecret,
+			imageRegistrySecretDataKey: generateInitCredentialForSec(),
 		},
 	})
 	listers := testBuilder.BuildListers()
@@ -208,8 +205,7 @@ func TestServiceEndpointCanBeOverwritten(t *testing.T) {
 			Namespace: defaults.ImageRegistryOperatorNamespace,
 		},
 		Data: map[string][]byte{
-			imageRegistryAccessKeyID:     TestAccessKeyId,
-			imageRegistryAccessKeySecret: TestAccessKeySecret,
+			imageRegistrySecretDataKey: generateInitCredentialForSec(),
 		},
 	})
 	listers := testBuilder.BuildListers()
@@ -305,8 +301,7 @@ func TestStorageManagementState(t *testing.T) {
 			Namespace: defaults.ImageRegistryOperatorNamespace,
 		},
 		Data: map[string][]byte{
-			imageRegistryAccessKeyID:     TestAccessKeyId,
-			imageRegistryAccessKeySecret: TestAccessKeySecret,
+			imageRegistrySecretDataKey: generateInitCredentialForSec(),
 		},
 	})
 	listers := builder.BuildListers()
@@ -631,8 +626,7 @@ func TestUserProvidedTags(t *testing.T) {
 					Namespace: defaults.ImageRegistryOperatorNamespace,
 				},
 				Data: map[string][]byte{
-					imageRegistryAccessKeyID:     TestAccessKeyId,
-					imageRegistryAccessKeySecret: TestAccessKeySecret,
+					imageRegistrySecretDataKey: generateInitCredentialForSec(),
 				},
 			})
 			listers := builder.BuildListers()
@@ -656,4 +650,14 @@ func TestUserProvidedTags(t *testing.T) {
 
 		})
 	}
+}
+
+func generateInitCredentialForSec() []byte {
+	buf := &bytes.Buffer{}
+	fmt.Fprint(buf, "[default]\n")
+	fmt.Fprint(buf, "type = access_key\n")
+	fmt.Fprintf(buf, "access_key_id = %s\n", TestAccessKeyId)
+	fmt.Fprintf(buf, "access_key_secret = %s\n", TestAccessKeySecret)
+
+	return buf.Bytes()
 }
