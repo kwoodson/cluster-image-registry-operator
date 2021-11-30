@@ -15,6 +15,8 @@ require (
 	github.com/IBM/go-sdk-core/v5 v5.5.0
 	github.com/IBM/ibm-cos-sdk-go v1.7.0
 	github.com/IBM/platform-services-go-sdk v0.18.15
+	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1263
+	github.com/aliyun/aliyun-oss-go-sdk v2.1.10+incompatible
 	github.com/aws/aws-sdk-go v1.38.35
 	github.com/davecgh/go-spew v1.1.1
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
@@ -46,4 +48,10 @@ require (
 	k8s.io/client-go v0.22.1
 	k8s.io/klog/v2 v2.9.0
 	k8s.io/utils v0.0.0-20210707171843-4b05e18ac7d9
+)
+
+replace (
+	github.com/aliyun/aliyun-oss-go-sdk => github.com/menglingwei/aliyun-oss-go-sdk v1.1.13
+	github.com/openshift/api => github.com/menglingwei/api v0.0.0-20211129013552-0a38efa85288
+	google.golang.org/grpc => google.golang.org/grpc v1.40.0
 )
