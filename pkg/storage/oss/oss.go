@@ -49,7 +49,7 @@ var mutex sync.Mutex
 
 type driver struct {
 	Context     context.Context
-	Config      *imageregistryv1.ImageRegistryConfigStorageOSS
+	Config      *imageregistryv1.ImageRegistryConfigStorageAlibabaOSS
 	Listers     *regopclient.Listers
 	credentials *credentials.AccessKeyCredential
 
@@ -59,7 +59,7 @@ type driver struct {
 
 // NewDriver creates a new OSS storage driver
 // Used during bootstrapping
-func NewDriver(ctx context.Context, c *imageregistryv1.ImageRegistryConfigStorageOSS, listers *regopclient.Listers) *driver {
+func NewDriver(ctx context.Context, c *imageregistryv1.ImageRegistryConfigStorageAlibabaOSS, listers *regopclient.Listers) *driver {
 	return &driver{
 		Context: ctx,
 		Config:  c,
@@ -73,7 +73,7 @@ func (d *driver) UpdateEffectiveConfig() error {
 	effectiveConfig := d.Config.DeepCopy()
 
 	if effectiveConfig == nil {
-		effectiveConfig = &imageregistryv1.ImageRegistryConfigStorageOSS{}
+		effectiveConfig = &imageregistryv1.ImageRegistryConfigStorageAlibabaOSS{}
 	}
 
 	// Load infrastructure values
@@ -166,15 +166,15 @@ func (d *driver) getOSSRegion() string {
 // getOSSEndpoint returns an endpoint that allows us to interact
 // with the Alibaba Cloud OSS service, details in https://www.alibabacloud.com/help/doc-detail/31837.htm
 func (d *driver) getOSSEndpoint() string {
-	endpoint := d.Config.RegionEndpoint
+	endpoint := d.Config.EndpointAccessibility
 
 	if len(endpoint) == 0 {
-		if d.Config.Internal {
+		if d.Config.EndpointAccessibility == imageregistryv1.InternalEndpoint {
 			return fmt.Sprintf("https://oss-%s-internal.aliyuncs.com", d.Config.Region)
 		}
 		return fmt.Sprintf("https://oss-%s.aliyuncs.com", d.Config.Region)
 	}
-	return endpoint
+	return string(endpoint)
 }
 
 func (d *driver) getOSSService() (*oss.Client, error) {
@@ -209,8 +209,8 @@ func (d *driver) ConfigEnv() (envs envvar.List, err error) {
 		return
 	}
 
-	if len(d.Config.RegionEndpoint) != 0 {
-		envs = append(envs, envvar.EnvVar{Name: envRegistryStorageOssEndpoint, Value: d.Config.RegionEndpoint})
+	if len(d.Config.EndpointAccessibility) != 0 {
+		envs = append(envs, envvar.EnvVar{Name: envRegistryStorageOssEndpoint, Value: d.Config.EndpointAccessibility})
 	}
 
 	envs = append(envs,
@@ -218,7 +218,7 @@ func (d *driver) ConfigEnv() (envs envvar.List, err error) {
 		envvar.EnvVar{Name: envRegistryStorageOssBucket, Value: d.Config.Bucket},
 		envvar.EnvVar{Name: envRegistryStorageOssRegion, Value: d.getOSSRegion()},
 		envvar.EnvVar{Name: envRegistryStorageOssEncrypt, Value: true},
-		envvar.EnvVar{Name: envRegistryStorageOssInternal, Value: d.Config.Internal},
+		envvar.EnvVar{Name: envRegistryStorageOssInternal, Value: imageregistryv1.InternalEndpoint},
 		envvar.EnvVar{Name: envRegistryStorageOssAccessKeyId, Value: d.credentials.AccessKeyId},
 		envvar.EnvVar{Name: envRegistryStorageOssAccessKeySecret, Value: d.credentials.AccessKeySecret},
 	)

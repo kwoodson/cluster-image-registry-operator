@@ -181,7 +181,7 @@ func GetPlatformStorage(listers *regopclient.Listers) (imageregistryv1.ImageRegi
 		}
 		replicas = 1
 	case configapiv1.AlibabaCloudPlatformType:
-		cfg.OSS = &imageregistryv1.ImageRegistryConfigStorageOSS{}
+		cfg.OSS = &imageregistryv1.ImageRegistryConfigStorageAlibabaOSS{}
 		replicas = 2
 	// Unknown platforms or LibVirt: we configure image registry using
 	// EmptyDir storage.
