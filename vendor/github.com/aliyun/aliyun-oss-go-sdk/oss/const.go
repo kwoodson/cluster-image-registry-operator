@@ -203,7 +203,6 @@ const (
 	HTTPHeaderOssTaskID                      = "X-Oss-Task-Id"
 	HTTPHeaderOssHashCtx                     = "X-Oss-Hash-Ctx"
 	HTTPHeaderOssMd5Ctx                      = "X-Oss-Md5-Ctx"
-	HTTPHeaderAllowSameActionOverLap         = "X-Oss-Allow-Same-Action-Overlap"
 )
 
 // HTTP Param
@@ -235,7 +234,7 @@ const (
 
 	NullVersion = "null"
 
-	Version = "v2.1.11" // Go SDK version
+	Version = "v2.1.10" // Go SDK version
 )
 
 // FrameType
