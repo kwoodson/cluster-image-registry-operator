@@ -166,15 +166,10 @@ func (d *driver) getOSSRegion() string {
 // getOSSEndpoint returns an endpoint that allows us to interact
 // with the Alibaba Cloud OSS service, details in https://www.alibabacloud.com/help/doc-detail/31837.htm
 func (d *driver) getOSSEndpoint() string {
-	isInternal := true
-	if d.Config.EndpointAccessibility == imageregistryv1.InternalEndpoint {
-		isInternal = false
+	if d.Config.EndpointAccessibility == imageregistryv1.PublicEndpoint {
+		return fmt.Sprintf("https://oss-%s.aliyuncs.com", d.Config.Region)
 	}
-
-	if isInternal {
-		return fmt.Sprintf("https://oss-%s-internal.aliyuncs.com", d.Config.Region)
-	}
-	return fmt.Sprintf("https://oss-%s.aliyuncs.com", d.Config.Region)
+	return fmt.Sprintf("https://oss-%s-internal.aliyuncs.com", d.Config.Region)
 }
 
 func (d *driver) getOSSService() (*oss.Client, error) {
