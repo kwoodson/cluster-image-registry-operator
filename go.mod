@@ -46,9 +46,11 @@ require (
 )
 
 require (
+	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
 )
 
 require (
@@ -163,8 +165,8 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-replace (
-	google.golang.org/grpc => google.golang.org/grpc v1.40.0
-)
+replace google.golang.org/grpc => google.golang.org/grpc v1.40.0
+
+//replace github.com/aliyun/aliyun-oss-go-sdk => github.com/menglingwei/aliyun-oss-go-sdk v1.1.13
 
 replace github.com/openshift/api => github.com/kwoodson/api v0.0.0-20211210214809-6a777a861220

@@ -166,15 +166,12 @@ func (d *driver) getOSSRegion() string {
 // getOSSEndpoint returns an endpoint that allows us to interact
 // with the Alibaba Cloud OSS service, details in https://www.alibabacloud.com/help/doc-detail/31837.htm
 func (d *driver) getOSSEndpoint() string {
-	isInternal := true
-	if d.Config.EndpointAccessibility == imageregistryv1.InternalEndpoint {
-		isInternal = false
+	// return fmt.Sprintf("oss-%s.aliyuncs.com", d.Config.Region)
+	if d.Config.EndpointAccessibility == imageregistryv1.PublicEndpoint {
+		return fmt.Sprintf("oss-%s.aliyuncs.com", d.Config.Region)
 	}
 
-	if isInternal {
-		return fmt.Sprintf("https://oss-%s-internal.aliyuncs.com", d.Config.Region)
-	}
-	return fmt.Sprintf("https://oss-%s.aliyuncs.com", d.Config.Region)
+	return fmt.Sprintf("oss-%s-internal.aliyuncs.com", d.Config.Region)
 }
 
 func (d *driver) getOSSService() (*oss.Client, error) {
@@ -188,15 +185,14 @@ func (d *driver) getOSSService() (*oss.Client, error) {
 		return nil, err
 	}
 
+	clientOptions := []oss.ClientOption{}
+	if d.roundTripper != nil {
+		clientOptions = append(clientOptions, oss.HTTPClient(&http.Client{Transport: d.roundTripper}))
+	}
+
 	endpoint := d.getOSSEndpoint()
 
-	var clientOptions oss.ClientOption
-	if d.roundTripper != nil {
-		clientOptions = oss.HTTPClient(&http.Client{
-			Transport: d.roundTripper,
-		})
-	}
-	client, err := oss.New(endpoint, d.credentials.AccessKeyId, d.credentials.AccessKeySecret, clientOptions)
+	client, err := oss.New(endpoint, d.credentials.AccessKeyId, d.credentials.AccessKeySecret, clientOptions...)
 	if err != nil {
 		return nil, err
 	}
@@ -213,13 +209,13 @@ func (d *driver) ConfigEnv() (envs envvar.List, err error) {
 		return
 	}
 
-	envs = append(envs, envvar.EnvVar{Name: envRegistryStorageOssEndpoint, Value: d.getOSSEndpoint()})
-
+	envs = append(envs, envvar.EnvVar{Name: envRegistryStorageOssEndpoint, Value: fmt.Sprintf("%s.%s", d.Config.Bucket, d.getOSSEndpoint())})
 	envs = append(envs,
 		envvar.EnvVar{Name: envRegistryStorage, Value: "oss"},
 		envvar.EnvVar{Name: envRegistryStorageOssBucket, Value: d.Config.Bucket},
 		envvar.EnvVar{Name: envRegistryStorageOssRegion, Value: d.getOSSRegion()},
 		envvar.EnvVar{Name: envRegistryStorageOssEncrypt, Value: true},
+		envvar.EnvVar{Name: envRegistryStorageOssInternal, Value: d.Config.EndpointAccessibility == imageregistryv1.InternalEndpoint || d.Config.EndpointAccessibility == ""},
 		envvar.EnvVar{Name: envRegistryStorageOssAccessKeyId, Value: d.credentials.AccessKeyId},
 		envvar.EnvVar{Name: envRegistryStorageOssAccessKeySecret, Value: d.credentials.AccessKeySecret},
 	)
