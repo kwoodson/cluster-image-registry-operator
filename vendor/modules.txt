@@ -124,8 +124,8 @@ github.com/aliyun/alibaba-cloud-sdk-go/sdk/errors
 github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests
 github.com/aliyun/alibaba-cloud-sdk-go/sdk/responses
 github.com/aliyun/alibaba-cloud-sdk-go/sdk/utils
-# github.com/aliyun/aliyun-oss-go-sdk v2.1.10+incompatible => github.com/menglingwei/aliyun-oss-go-sdk v1.1.13
-## explicit; go 1.11
+# github.com/aliyun/aliyun-oss-go-sdk v2.1.10+incompatible
+## explicit
 github.com/aliyun/aliyun-oss-go-sdk/oss
 # github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
 ## explicit; go 1.13
@@ -1524,6 +1524,5 @@ sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
 ## explicit; go 1.12
 sigs.k8s.io/yaml
-# github.com/aliyun/aliyun-oss-go-sdk => github.com/menglingwei/aliyun-oss-go-sdk v1.1.13
 # google.golang.org/grpc => google.golang.org/grpc v1.40.0
 # github.com/openshift/api => github.com/kwoodson/api v0.0.0-20211210214809-6a777a861220
