@@ -49,7 +49,7 @@ var mutex sync.Mutex
 
 type driver struct {
 	Context     context.Context
-	Config      *imageregistryv1.ImageRegistryConfigStorageOSS
+	Config      *imageregistryv1.ImageRegistryConfigStorageAlibabaOSS
 	Listers     *regopclient.Listers
 	credentials *credentials.AccessKeyCredential
 
@@ -59,7 +59,7 @@ type driver struct {
 
 // NewDriver creates a new OSS storage driver
 // Used during bootstrapping
-func NewDriver(ctx context.Context, c *imageregistryv1.ImageRegistryConfigStorageOSS, listers *regopclient.Listers) *driver {
+func NewDriver(ctx context.Context, c *imageregistryv1.ImageRegistryConfigStorageAlibabaOSS, listers *regopclient.Listers) *driver {
 	return &driver{
 		Context: ctx,
 		Config:  c,
@@ -73,7 +73,7 @@ func (d *driver) UpdateEffectiveConfig() error {
 	effectiveConfig := d.Config.DeepCopy()
 
 	if effectiveConfig == nil {
-		effectiveConfig = &imageregistryv1.ImageRegistryConfigStorageOSS{}
+		effectiveConfig = &imageregistryv1.ImageRegistryConfigStorageAlibabaOSS{}
 	}
 
 	// Load infrastructure values
@@ -166,15 +166,15 @@ func (d *driver) getOSSRegion() string {
 // getOSSEndpoint returns an endpoint that allows us to interact
 // with the Alibaba Cloud OSS service, details in https://www.alibabacloud.com/help/doc-detail/31837.htm
 func (d *driver) getOSSEndpoint() string {
-	endpoint := d.Config.RegionEndpoint
-
-	if len(endpoint) == 0 {
-		if d.Config.Internal {
-			return fmt.Sprintf("https://oss-%s-internal.aliyuncs.com", d.Config.Region)
-		}
-		return fmt.Sprintf("https://oss-%s.aliyuncs.com", d.Config.Region)
+	isInternal := true
+	if d.Config.EndpointAccessibility == imageregistryv1.InternalEndpoint {
+		isInternal = false
 	}
-	return endpoint
+
+	if isInternal {
+		return fmt.Sprintf("https://oss-%s-internal.aliyuncs.com", d.Config.Region)
+	}
+	return fmt.Sprintf("https://oss-%s.aliyuncs.com", d.Config.Region)
 }
 
 func (d *driver) getOSSService() (*oss.Client, error) {
@@ -189,14 +189,18 @@ func (d *driver) getOSSService() (*oss.Client, error) {
 	}
 
 	endpoint := d.getOSSEndpoint()
-	client, err := oss.New(endpoint, d.credentials.AccessKeyId, d.credentials.AccessKeySecret)
+
+	var clientOptions oss.ClientOption
+	if d.roundTripper != nil {
+		clientOptions = oss.HTTPClient(&http.Client{
+			Transport: d.roundTripper,
+		})
+	}
+	client, err := oss.New(endpoint, d.credentials.AccessKeyId, d.credentials.AccessKeySecret, clientOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	if d.roundTripper != nil {
-		client.SetTransport(d.roundTripper)
-	}
 	return client, err
 }
 
@@ -209,16 +213,13 @@ func (d *driver) ConfigEnv() (envs envvar.List, err error) {
 		return
 	}
 
-	if len(d.Config.RegionEndpoint) != 0 {
-		envs = append(envs, envvar.EnvVar{Name: envRegistryStorageOssEndpoint, Value: d.Config.RegionEndpoint})
-	}
+	envs = append(envs, envvar.EnvVar{Name: envRegistryStorageOssEndpoint, Value: d.getOSSEndpoint()})
 
 	envs = append(envs,
 		envvar.EnvVar{Name: envRegistryStorage, Value: "oss"},
 		envvar.EnvVar{Name: envRegistryStorageOssBucket, Value: d.Config.Bucket},
 		envvar.EnvVar{Name: envRegistryStorageOssRegion, Value: d.getOSSRegion()},
 		envvar.EnvVar{Name: envRegistryStorageOssEncrypt, Value: true},
-		envvar.EnvVar{Name: envRegistryStorageOssInternal, Value: d.Config.Internal},
 		envvar.EnvVar{Name: envRegistryStorageOssAccessKeyId, Value: d.credentials.AccessKeyId},
 		envvar.EnvVar{Name: envRegistryStorageOssAccessKeySecret, Value: d.credentials.AccessKeySecret},
 	)
@@ -520,7 +521,13 @@ func (d *driver) CreateStorage(cr *imageregistryv1.Config) error {
 	if cr.Spec.Storage.ManagementState == imageregistryv1.StorageManagementStateManaged {
 		encryptionRule := oss.ServerEncryptionRule{}
 
-		encryptionRule.SSEDefault.SSEAlgorithm = string(oss.AESAlgorithm)
+		// kms encryption
+		if d.Config.Encryption != nil && d.Config.Encryption.Type == imageregistryv1.KMS && d.Config.Encryption.KMS != nil && len(d.Config.Encryption.KMS.KeyID) > 0 {
+			encryptionRule.SSEDefault.SSEAlgorithm = string(oss.KMSAlgorithm)
+			encryptionRule.SSEDefault.KMSMasterKeyID = d.Config.Encryption.KMS.KeyID
+		} else {
+			encryptionRule.SSEDefault.SSEAlgorithm = string(oss.AESAlgorithm)
+		}
 
 		err = svc.SetBucketEncryption(d.Config.Bucket, encryptionRule)
 		if err != nil {
