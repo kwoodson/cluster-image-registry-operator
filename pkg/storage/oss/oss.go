@@ -173,13 +173,11 @@ func (d *driver) getOSSService() (*oss.Client, error) {
 
 	endpoint := d.getOSSEndpoint()
 
-	var clientOptions oss.ClientOption
+	clientOptions := []oss.ClientOption{}
 	if d.roundTripper != nil {
-		clientOptions = oss.HTTPClient(&http.Client{
-			Transport: d.roundTripper,
-		})
+		clientOptions = append(clientOptions, oss.HTTPClient(&http.Client{Transport: d.roundTripper}))
 	}
-	client, err := oss.New(endpoint, d.credentials.AccessKeyId, d.credentials.AccessKeySecret, clientOptions)
+	client, err := oss.New(endpoint, d.credentials.AccessKeyId, d.credentials.AccessKeySecret, clientOptions...)
 	if err != nil {
 		return nil, err
 	}
