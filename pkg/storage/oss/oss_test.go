@@ -164,8 +164,8 @@ func TestConfigEnv(t *testing.T) {
 	}
 
 	expectedVars := map[string]interface{}{
-		envRegistryStorage:          "oss",
-		envRegistryStorageOssRegion: "oss-us-east-1",
+		"REGISTRY_STORAGE":            "oss",
+		"REGISTRY_STORAGE_OSS_REGION": "us-east-1",
 	}
 	for key, value := range expectedVars {
 		e := findEnvVar(envvars, key)
@@ -218,8 +218,8 @@ func TestServiceEndpointCanBeOverwritten(t *testing.T) {
 	}
 
 	expectedVars := map[string]interface{}{
-		envRegistryStorage:          "oss",
-		envRegistryStorageOssRegion: "oss-us-west-1",
+		"REGISTRY_STORAGE":            "oss",
+		"REGISTRY_STORAGE_OSS_REGION": "us-west-1",
 	}
 	for key, value := range expectedVars {
 		e := findEnvVar(envvars, key)
@@ -231,9 +231,9 @@ func TestServiceEndpointCanBeOverwritten(t *testing.T) {
 		}
 	}
 
-	e := findEnvVar(envvars, envRegistryStorageOssEndpoint)
+	e := findEnvVar(envvars, "REGISTRY_STORAGE_OSS_ENDPOINT")
 	if e != nil {
-		t.Logf("env %s found,  %v", envRegistryStorageOssEndpoint, e)
+		t.Logf("env %s found,  %v", "REGISTRY_STORAGE_OSS_ENDPOINT", e)
 	}
 }
 

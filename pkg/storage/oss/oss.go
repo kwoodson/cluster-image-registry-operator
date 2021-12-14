@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"reflect"
 	"sync"
 
@@ -32,17 +33,6 @@ import (
 const (
 	imageRegistrySecretMountpoint = "/var/run/secrets/cloud"
 	imageRegistrySecretDataKey    = "credentials"
-	imageRegistryAccessKeyID      = "access_key_id"
-	imageRegistryAccessKeySecret  = "access_key_secret"
-
-	envRegistryStorage                   = "REGISTRY_STORAGE"
-	envRegistryStorageOssBucket          = "REGISTRY_STORAGE_OSS_BUCKET"
-	envRegistryStorageOssRegion          = "REGISTRY_STORAGE_OSS_REGION"
-	envRegistryStorageOssEndpoint        = "REGISTRY_STORAGE_OSS_ENDPOINT"
-	envRegistryStorageOssEncrypt         = "REGISTRY_STORAGE_OSS_ENCRYPT"
-	envRegistryStorageOssInternal        = "REGISTRY_STORAGE_OSS_INTERNAL"
-	envRegistryStorageOssAccessKeyId     = "REGISTRY_STORAGE_OSS_ACCESSKEYID"
-	envRegistryStorageOssAccessKeySecret = "REGISTRY_STORAGE_OSS_ACCESSKEYSECRET"
 )
 
 var mutex sync.Mutex
@@ -143,9 +133,6 @@ func (d *driver) getCredentialsConfigData() error {
 		}
 	}
 
-	if sec == nil {
-		return fmt.Errorf("unable to get secret %q: %v", fmt.Sprintf("%s/%s", defaults.ImageRegistryOperatorNamespace, defaults.CloudCredentialsName), err)
-	}
 	credential, err := fetchCredentialsIniFromSecret(sec)
 	if err != nil {
 		return fmt.Errorf("failed to generate shared secrets data: %v", err)
@@ -156,20 +143,21 @@ func (d *driver) getCredentialsConfigData() error {
 	return nil
 }
 
-// getOSSRegion returns an region that allows Docker Registry to access Alibaba Cloud OSS service
-// details in https://www.alibabacloud.com/help/doc-detail/31837.htm
-func (d *driver) getOSSRegion() string {
-	region := d.Config.Region
-	return "oss-" + region
+// isInternal return An internal endpoint or the public endpoint for OSS access.  default internal
+func (d *driver) isInternal() bool {
+	if d.Config.EndpointAccessibility == imageregistryv1.PublicEndpoint {
+		return false
+	}
+	return true
 }
 
 // getOSSEndpoint returns an endpoint that allows us to interact
 // with the Alibaba Cloud OSS service, details in https://www.alibabacloud.com/help/doc-detail/31837.htm
 func (d *driver) getOSSEndpoint() string {
-	if d.Config.EndpointAccessibility == imageregistryv1.PublicEndpoint {
-		return fmt.Sprintf("https://oss-%s.aliyuncs.com", d.Config.Region)
+	if d.isInternal() {
+		return fmt.Sprintf("https://oss-%s-internal.aliyuncs.com", d.Config.Region)
 	}
-	return fmt.Sprintf("https://oss-%s-internal.aliyuncs.com", d.Config.Region)
+	return fmt.Sprintf("https://oss-%s.aliyuncs.com", d.Config.Region)
 }
 
 func (d *driver) getOSSService() (*oss.Client, error) {
@@ -208,15 +196,16 @@ func (d *driver) ConfigEnv() (envs envvar.List, err error) {
 		return
 	}
 
-	envs = append(envs, envvar.EnvVar{Name: envRegistryStorageOssEndpoint, Value: d.getOSSEndpoint()})
-
 	envs = append(envs,
-		envvar.EnvVar{Name: envRegistryStorage, Value: "oss"},
-		envvar.EnvVar{Name: envRegistryStorageOssBucket, Value: d.Config.Bucket},
-		envvar.EnvVar{Name: envRegistryStorageOssRegion, Value: d.getOSSRegion()},
-		envvar.EnvVar{Name: envRegistryStorageOssEncrypt, Value: true},
-		envvar.EnvVar{Name: envRegistryStorageOssAccessKeyId, Value: d.credentials.AccessKeyId},
-		envvar.EnvVar{Name: envRegistryStorageOssAccessKeySecret, Value: d.credentials.AccessKeySecret},
+		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_REGIONENDPOINT", Value: d.getOSSEndpoint()},
+		envvar.EnvVar{Name: "REGISTRY_STORAGE", Value: "oss"},
+		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_BUCKET", Value: d.Config.Bucket},
+		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_REGION", Value: d.Config.Region},
+		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_INTERNAL", Value: d.isInternal()},
+		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_ENCRYPT", Value: true},
+		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_CREDENTIALSCONFIGPATH", Value: filepath.Join(imageRegistrySecretMountpoint, imageRegistrySecretDataKey)},
+		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_ACCESSKEYID", Value: d.credentials.AccessKeyId},
+		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_ACCESSKEYSECRET", Value: d.credentials.AccessKeySecret},
 	)
 
 	return
@@ -276,8 +265,8 @@ func (d *driver) sharedCredentialsDataFromStaticCreds() ([]byte, error) {
 	buf := &bytes.Buffer{}
 	fmt.Fprint(buf, "[default]\n")
 	fmt.Fprint(buf, "type = access_key\n")
-	fmt.Fprintf(buf, "%s = %s\n", imageRegistryAccessKeyID, d.credentials.AccessKeyId)
-	fmt.Fprintf(buf, "%s = %s\n", imageRegistryAccessKeySecret, d.credentials.AccessKeySecret)
+	fmt.Fprintf(buf, "access_key_id = %s\n", d.credentials.AccessKeyId)
+	fmt.Fprintf(buf, "access_key_secret = %s\n", d.credentials.AccessKeySecret)
 
 	return buf.Bytes(), nil
 }
