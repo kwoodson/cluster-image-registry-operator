@@ -155,9 +155,9 @@ func (d *driver) isInternal() bool {
 // with the Alibaba Cloud OSS service, details in https://www.alibabacloud.com/help/doc-detail/31837.htm
 func (d *driver) getOSSEndpoint() string {
 	if d.isInternal() {
-		return fmt.Sprintf("https://oss-%s-internal.aliyuncs.com", d.Config.Region)
+		return fmt.Sprintf("oss-%s-internal.aliyuncs.com", d.Config.Region)
 	}
-	return fmt.Sprintf("https://oss-%s.aliyuncs.com", d.Config.Region)
+	return fmt.Sprintf("oss-%s.aliyuncs.com", d.Config.Region)
 }
 
 func (d *driver) getOSSService() (*oss.Client, error) {
@@ -195,7 +195,7 @@ func (d *driver) ConfigEnv() (envs envvar.List, err error) {
 	}
 
 	envs = append(envs,
-		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_REGIONENDPOINT", Value: d.getOSSEndpoint()},
+		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_REGIONENDPOINT", Value: fmt.Sprintf("%s.%s", d.Config.Bucket, d.getOSSEndpoint())},
 		envvar.EnvVar{Name: "REGISTRY_STORAGE", Value: "oss"},
 		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_BUCKET", Value: d.Config.Bucket},
 		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_REGION", Value: d.Config.Region},
