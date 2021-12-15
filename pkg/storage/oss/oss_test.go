@@ -20,6 +20,7 @@ import (
 	cirofake "github.com/openshift/cluster-image-registry-operator/pkg/client/fake"
 	"github.com/openshift/cluster-image-registry-operator/pkg/defaults"
 	"github.com/openshift/cluster-image-registry-operator/pkg/envvar"
+	"github.com/stretchr/testify/assert"
 )
 
 var TestAccessKeyId = "TEST_ACCESS_KEY_ID"
@@ -165,7 +166,7 @@ func TestConfigEnv(t *testing.T) {
 
 	expectedVars := map[string]interface{}{
 		"REGISTRY_STORAGE":            "oss",
-		"REGISTRY_STORAGE_OSS_REGION": "us-east-1",
+		"REGISTRY_STORAGE_OSS_REGION": "oss-us-east-1",
 	}
 	for key, value := range expectedVars {
 		e := findEnvVar(envvars, key)
@@ -219,7 +220,7 @@ func TestServiceEndpointCanBeOverwritten(t *testing.T) {
 
 	expectedVars := map[string]interface{}{
 		"REGISTRY_STORAGE":            "oss",
-		"REGISTRY_STORAGE_OSS_REGION": "us-west-1",
+		"REGISTRY_STORAGE_OSS_REGION": "oss-us-west-1",
 	}
 	for key, value := range expectedVars {
 		e := findEnvVar(envvars, key)
@@ -660,4 +661,52 @@ func generateInitCredentialForSec() []byte {
 	fmt.Fprintf(buf, "access_key_secret = %s\n", TestAccessKeySecret)
 
 	return buf.Bytes()
+}
+
+func Test_isInternal(t *testing.T) {
+	ctx := context.Background()
+	config := &imageregistryv1.ImageRegistryConfigStorageAlibabaOSS{
+		EndpointAccessibility: imageregistryv1.InternalEndpoint,
+	}
+
+	testBuilder := cirofake.NewFixturesBuilder()
+	testBuilder.AddInfraConfig(&configv1.Infrastructure{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cluster",
+		},
+		Status: configv1.InfrastructureStatus{
+			PlatformStatus: &configv1.PlatformStatus{
+				Type: configv1.AlibabaCloudPlatformType,
+				AlibabaCloud: &configv1.AlibabaCloudPlatformStatus{
+					Region: "us-east-1",
+				},
+			},
+		},
+	})
+	testBuilder.AddSecrets(&corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      defaults.CloudCredentialsName,
+			Namespace: defaults.ImageRegistryOperatorNamespace,
+		},
+		Data: map[string][]byte{
+			imageRegistrySecretDataKey: generateInitCredentialForSec(),
+		},
+	})
+	listers := testBuilder.BuildListers()
+
+	d := NewDriver(ctx, config, listers)
+
+	// internal
+	result := d.isInternal()
+	assert.Equal(t, true, result)
+
+	//public
+	d.Config.EndpointAccessibility = imageregistryv1.PublicEndpoint
+	result = d.isInternal()
+	assert.Equal(t, false, result)
+
+	// empty
+	d.Config.EndpointAccessibility = ""
+	result = d.isInternal()
+	assert.Equal(t, true, result)
 }

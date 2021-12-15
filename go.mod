@@ -25,7 +25,7 @@ require (
 	github.com/gophercloud/gophercloud v0.17.0
 	github.com/gophercloud/utils v0.0.0-20210323225332-7b186010c04f
 	github.com/goware/urlx v0.3.1
-	github.com/openshift/api v0.0.0-20211108165917-be1be0e89115
+	github.com/openshift/api v0.0.0-20211215015256-3cf5120f2ce6
 	github.com/openshift/build-machinery-go v0.0.0-20211213093930-7e33a7eb4ce3
 	github.com/openshift/client-go v0.0.0-20210916133943-9acee1a0fb83
 	github.com/openshift/installer v0.9.0-master.0.20190726121806-6e8f9c335410
@@ -34,6 +34,7 @@ require (
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.28.0
 	github.com/spf13/cobra v1.2.1
+	github.com/stretchr/testify v1.7.0
 	golang.org/x/net v0.0.0-20210825183410-e898025ed96a
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
 	google.golang.org/api v0.44.0
@@ -49,7 +50,8 @@ require (
 	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/google/gofuzz v1.1.0 // indirect
+	github.com/google/gofuzz v1.2.0 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 )
 
@@ -166,5 +168,3 @@ require (
 )
 
 replace google.golang.org/grpc => google.golang.org/grpc v1.40.0
-
-replace github.com/openshift/api => github.com/kwoodson/api v0.0.0-20211210214809-6a777a861220

@@ -145,10 +145,7 @@ func (d *driver) getCredentialsConfigData() error {
 
 // isInternal return An internal endpoint or the public endpoint for OSS access.  default internal
 func (d *driver) isInternal() bool {
-	if d.Config.EndpointAccessibility == imageregistryv1.PublicEndpoint {
-		return false
-	}
-	return true
+	return d.Config.EndpointAccessibility != imageregistryv1.PublicEndpoint
 }
 
 // getOSSEndpoint returns an endpoint that allows us to interact
@@ -195,10 +192,10 @@ func (d *driver) ConfigEnv() (envs envvar.List, err error) {
 	}
 
 	envs = append(envs,
-		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_REGIONENDPOINT", Value: fmt.Sprintf("%s.%s", d.Config.Bucket, d.getOSSEndpoint())},
+		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_ENDPOINT", Value: fmt.Sprintf("%s.%s", d.Config.Bucket, d.getOSSEndpoint())},
 		envvar.EnvVar{Name: "REGISTRY_STORAGE", Value: "oss"},
 		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_BUCKET", Value: d.Config.Bucket},
-		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_REGION", Value: d.Config.Region},
+		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_REGION", Value: fmt.Sprintf("oss-%s", d.Config.Region)},
 		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_INTERNAL", Value: d.isInternal()},
 		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_ENCRYPT", Value: true},
 		envvar.EnvVar{Name: "REGISTRY_STORAGE_OSS_CREDENTIALSCONFIGPATH", Value: filepath.Join(imageRegistrySecretMountpoint, imageRegistrySecretDataKey)},
@@ -504,7 +501,7 @@ func (d *driver) CreateStorage(cr *imageregistryv1.Config) error {
 		encryptionRule := oss.ServerEncryptionRule{}
 
 		// kms encryption
-		if d.Config.Encryption != nil && d.Config.Encryption.Type == imageregistryv1.KMS && d.Config.Encryption.KMS != nil && len(d.Config.Encryption.KMS.KeyID) > 0 {
+		if d.Config.Encryption != nil && d.Config.Encryption.Method == imageregistryv1.KMS && d.Config.Encryption.KMS != nil && len(d.Config.Encryption.KMS.KeyID) > 0 {
 			encryptionRule.SSEDefault.SSEAlgorithm = string(oss.KMSAlgorithm)
 			encryptionRule.SSEDefault.KMSMasterKeyID = d.Config.Encryption.KMS.KeyID
 		} else {

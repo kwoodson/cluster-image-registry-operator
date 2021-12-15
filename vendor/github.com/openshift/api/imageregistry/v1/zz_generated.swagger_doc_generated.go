@@ -28,9 +28,9 @@ func (ConfigList) SwaggerDoc() map[string]string {
 }
 
 var map_EncryptionAlibaba = map[string]string{
-	"":     "EncryptionAlibaba this a union type in kube parlance.  Depending on the value for the encryptionType, different pointers may be used",
-	"type": "EncryptionType defines the different encrytion types available Empty value means no opinion and the platform chooses the a default, which is subject to change over time. Currently the default is `PlainText`.",
-	"kms":  "KMS (key management service) is an encryption type that holds the struct for KMS KeyID",
+	"":       "EncryptionAlibaba this a union type in kube parlance.  Depending on the value for the AlibabaEncryptionMethod, different pointers may be used",
+	"method": "Method defines the different encrytion modes available Empty value means no opinion and the platform chooses the a default, which is subject to change over time. Currently the default is `AES256`.",
+	"kms":    "KMS (key management service) is an encryption type that holds the struct for KMS KeyID",
 }
 
 func (EncryptionAlibaba) SwaggerDoc() map[string]string {
