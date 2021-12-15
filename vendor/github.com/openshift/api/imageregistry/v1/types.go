@@ -309,8 +309,8 @@ type ImageRegistryConfigStorageIBMCOS struct {
 // EndpointAccessibility defines the Alibaba VPC endpoint for storage
 type EndpointAccessibility string
 
-// AlibabaEncryptionMode defines an enumerable type for the encryption mode
-type AlibabaEncryptionMode string
+// AlibabaEncryptionMethod defines an enumerable type for the encryption mode
+type AlibabaEncryptionMethod string
 
 const (
 	// InternalEndpoint sets the VPC endpoint to internal
@@ -318,24 +318,22 @@ const (
 	// PublicEndpoint sets the VPC endpoint to public
 	PublicEndpoint EndpointAccessibility = "Public"
 
-	// PlainText is an AlibabaEncryptionMode. This is the dafault. This means no encryption
-	PlainText AlibabaEncryptionMode = "PlainText"
-	// AES256 is an AlibabaEncryptionMode. This means AES256 encryption
-	AES256 AlibabaEncryptionMode = "AES256"
-	// KMS is an AlibabaEncryptionMode. This means KMS encryption
-	KMS AlibabaEncryptionMode = "KMS"
+	// AES256 is an AlibabaEncryptionMethod. This means AES256 encryption
+	AES256 AlibabaEncryptionMethod = "AES256"
+	// KMS is an AlibabaEncryptionMethod. This means KMS encryption
+	KMS AlibabaEncryptionMethod = "KMS"
 )
 
-// EncryptionAlibaba this a union type in kube parlance.  Depending on the value for the encryptionType,
+// EncryptionAlibaba this a union type in kube parlance.  Depending on the value for the AlibabaEncryptionMethod,
 // different pointers may be used
 type EncryptionAlibaba struct {
-	// EncryptionType defines the different encrytion types available
+	// Method defines the different encrytion modes available
 	// Empty value means no opinion and the platform chooses the a default, which is subject to change over time.
-	// Currently the default is `PlainText`.
-	// +kubebuilder:validation:Enum="PlainText";"KMS";"AES256"
-	// +kubebuilder:default="PlainText"
+	// Currently the default is `AES256`.
+	// +kubebuilder:validation:Enum="KMS";"AES256"
+	// +kubebuilder:default="AES256"
 	// +optional
-	Type AlibabaEncryptionMode `json:"type"`
+	Method AlibabaEncryptionMethod `json:"method"`
 
 	// KMS (key management service) is an encryption type that holds the struct for KMS KeyID
 	// +optional

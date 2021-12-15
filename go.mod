@@ -25,8 +25,8 @@ require (
 	github.com/gophercloud/gophercloud v0.17.0
 	github.com/gophercloud/utils v0.0.0-20210323225332-7b186010c04f
 	github.com/goware/urlx v0.3.1
-	github.com/openshift/api v0.0.0-20211108165917-be1be0e89115
-	github.com/openshift/build-machinery-go v0.0.0-20210806203541-4ea9b6da3a37
+	github.com/openshift/api v0.0.0-20211214201455-207332ebcdc9
+	github.com/openshift/build-machinery-go v0.0.0-20211213093930-7e33a7eb4ce3
 	github.com/openshift/client-go v0.0.0-20210916133943-9acee1a0fb83
 	github.com/openshift/installer v0.9.0-master.0.20190726121806-6e8f9c335410
 	github.com/openshift/library-go v0.0.0-20211110085240-047b536a17c6
@@ -46,9 +46,11 @@ require (
 )
 
 require (
+	github.com/baiyubin/aliyun-sts-go-sdk v0.0.0-20180326062324-cfa1a18b161f // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
 )
 
 require (
@@ -163,8 +165,6 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-replace (
-	google.golang.org/grpc => google.golang.org/grpc v1.40.0
-)
+replace google.golang.org/grpc => google.golang.org/grpc v1.40.0
 
-replace github.com/openshift/api => github.com/kwoodson/api v0.0.0-20211210214809-6a777a861220
+replace github.com/openshift/api => github.com/kwoodson/api v0.0.0-20211214221632-406602a58dab
